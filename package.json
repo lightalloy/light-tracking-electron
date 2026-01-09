@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Time tracking desktop application",
   "main": "electron/main.js",
+  "author": "Anna <lightallloy@gmail.com>",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

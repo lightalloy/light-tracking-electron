@@ -1,9 +1,51 @@
 import { useState, useEffect } from 'react'
 
+const formatDateForInput = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${day}.${month}.${year}`
+}
+
+const formatDateTimeForInput = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${day}.${month}.${year} ${hours}:${minutes}`
+}
+
+const parseDateInput = (dateStr) => {
+  if (!dateStr) return ''
+  // Convert from "DD.MM.YYYY" to "YYYY-MM-DD"
+  const parts = dateStr.split('.')
+  if (parts.length === 3) {
+    const [day, month, year] = parts
+    return `${year}-${month}-${day}`
+  }
+  return dateStr
+}
+
+const parseDateTimeInput = (dateTimeStr) => {
+  if (!dateTimeStr) return ''
+  // Convert from "DD.MM.YYYY HH:mm" to "YYYY-MM-DD HH:mm:ss"
+  const [datePart, timePart] = dateTimeStr.split(' ')
+  const date = parseDateInput(datePart)
+  if (date && timePart) {
+    return `${date} ${timePart}:00`
+  }
+  return ''
+}
+
 function Statistics() {
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date()
-    return today.toISOString().split('T')[0]
+    return formatDateForInput(today.toISOString().split('T')[0])
   })
   const [entries, setEntries] = useState([])
   const [stats, setStats] = useState([])
@@ -17,9 +59,10 @@ function Statistics() {
 
   const loadData = async () => {
     if (window.electronAPI) {
+      const dateForAPI = parseDateInput(selectedDate)
       const [entriesData, statsData] = await Promise.all([
-        window.electronAPI.getEntries(selectedDate),
-        window.electronAPI.getStats(selectedDate)
+        window.electronAPI.getEntries(dateForAPI),
+        window.electronAPI.getStats(dateForAPI)
       ])
       setEntries(entriesData || [])
       setStats(statsData || [])
@@ -40,29 +83,12 @@ function Statistics() {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
   }
 
-  const formatDateTimeLocal = (dateStr) => {
-    if (!dateStr) return ''
-    const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    return `${year}-${month}-${day}T${hours}:${minutes}`
-  }
-
-  const parseDateTimeLocal = (dateTimeLocalStr) => {
-    if (!dateTimeLocalStr) return ''
-    // Convert from "YYYY-MM-DDTHH:mm" to "YYYY-MM-DD HH:mm:ss"
-    return dateTimeLocalStr.replace('T', ' ') + ':00'
-  }
-
   const handleEdit = (entry) => {
     setEditingId(entry.id)
     setEditForm({
       taskName: entry.task_name,
-      startTime: formatDateTimeLocal(entry.start_time),
-      endTime: formatDateTimeLocal(entry.end_time)
+      startTime: formatDateTimeForInput(entry.start_time),
+      endTime: formatDateTimeForInput(entry.end_time)
     })
   }
 
@@ -77,8 +103,8 @@ function Statistics() {
       return
     }
 
-    const startTime = parseDateTimeLocal(editForm.startTime)
-    const endTime = parseDateTimeLocal(editForm.endTime)
+    const startTime = parseDateTimeInput(editForm.startTime)
+    const endTime = parseDateTimeInput(editForm.endTime)
 
     if (!startTime || !endTime) {
       alert('Start time and end time are required')
@@ -136,9 +162,10 @@ function Statistics() {
       {/* Date picker */}
       <div>
         <input
-          type="date"
+          type="text"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
+          placeholder="DD.MM.YYYY"
           className="bg-surface-700 border border-surface-600 rounded-lg px-4 py-2 
                      text-neutral-200 focus:outline-none focus:border-accent-lime
                      cursor-pointer"
@@ -209,9 +236,10 @@ function Statistics() {
                     <div>
                       <label className="block text-xs text-neutral-400 mb-1">Start Time</label>
                       <input
-                        type="datetime-local"
+                        type="text"
                         value={editForm.startTime}
                         onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
+                        placeholder="DD.MM.YYYY HH:mm"
                         className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
                                    text-neutral-200 focus:outline-none focus:border-accent-lime"
                       />
@@ -219,9 +247,10 @@ function Statistics() {
                     <div>
                       <label className="block text-xs text-neutral-400 mb-1">End Time</label>
                       <input
-                        type="datetime-local"
+                        type="text"
                         value={editForm.endTime}
                         onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
+                        placeholder="DD.MM.YYYY HH:mm"
                         className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
                                    text-neutral-200 focus:outline-none focus:border-accent-lime"
                       />
