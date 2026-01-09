@@ -1,6 +1,10 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electron')
-const path = require('path')
-const TimeTrackingDB = require('./database')
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import TimeTrackingDB from './database.mjs'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 let mainWindow = null
 let tray = null

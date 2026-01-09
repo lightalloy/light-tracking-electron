@@ -2,7 +2,8 @@
   "name": "light-tracking-electron",
   "version": "1.0.0",
   "description": "Time tracking desktop application",
-  "main": "electron/main.js",
+  "type": "module",
+  "main": "electron/main.mjs",
   "author": "Anna <lightallloy@gmail.com>",
   "scripts": {
     "dev": "vite",

@@ -1,7 +1,7 @@
-const Database = require('better-sqlite3')
-const path = require('path')
-const fs = require('fs')
-const os = require('os')
+import Database from 'better-sqlite3'
+import path from 'path'
+import fs from 'fs'
+import os from 'os'
 
 class TimeTrackingDB {
   constructor() {
@@ -126,5 +126,5 @@ class TimeTrackingDB {
   }
 }
 
-module.exports = TimeTrackingDB
+export default TimeTrackingDB
 
