@@ -48,7 +48,7 @@ function App() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <header className="mb-8">
-          <h1 className="text-2xl font-bold text-accent-lime tracking-tight">
+          <h1 className="text-2xl font-bold text-accent-secondary tracking-tight">
             Light Tracking
           </h1>
           <p className="text-neutral-500 text-sm mt-1">
@@ -62,7 +62,7 @@ function App() {
             onClick={() => setActiveTab('timer')}
             className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
               activeTab === 'timer'
-                ? 'bg-surface-600 text-accent-lime'
+                ? 'bg-surface-600 text-accent-secondary'
                 : 'text-neutral-400 hover:text-neutral-200'
             }`}
           >
@@ -72,7 +72,7 @@ function App() {
             onClick={() => setActiveTab('stats')}
             className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
               activeTab === 'stats'
-                ? 'bg-surface-600 text-accent-lime'
+                ? 'bg-surface-600 text-accent-secondary'
                 : 'text-neutral-400 hover:text-neutral-200'
             }`}
           >

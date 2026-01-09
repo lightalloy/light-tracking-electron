@@ -37,7 +37,7 @@ function Timer({ isRunning, currentTask }) {
       <div className="flex items-center justify-center gap-2 mb-4">
         <div 
           className={`w-3 h-3 rounded-full transition-colors ${
-            isRunning ? 'bg-accent-green animate-pulse' : 'bg-neutral-600'
+            isRunning ? 'bg-accent-primary animate-pulse' : 'bg-neutral-600'
           }`}
         />
         <span className="text-sm text-neutral-400">

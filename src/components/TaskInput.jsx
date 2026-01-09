@@ -24,7 +24,7 @@ function TaskInput({ isRunning, onStart, onStop }) {
           disabled={isRunning}
           className="w-full bg-surface-700 border border-surface-600 rounded-lg px-4 py-3 
                      text-neutral-200 placeholder-neutral-500 
-                     focus:outline-none focus:border-accent-lime focus:ring-1 focus:ring-accent-lime
+                     focus:outline-none focus:border-accent-secondary focus:ring-1 focus:ring-accent-secondary
                      disabled:opacity-50 disabled:cursor-not-allowed
                      transition-all"
         />
@@ -36,7 +36,7 @@ function TaskInput({ isRunning, onStart, onStop }) {
                     transition-all duration-200 
                     ${isRunning
                       ? 'bg-red-600 hover:bg-red-500 text-white'
-                      : 'bg-accent-green hover:bg-accent-lime text-surface-900 disabled:opacity-50 disabled:cursor-not-allowed'
+                      : 'bg-accent-primary hover:bg-accent-secondary text-surface-900 disabled:opacity-50 disabled:cursor-not-allowed'
                     }`}
       >
         {isRunning ? 'Stop' : 'Start'}

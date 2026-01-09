@@ -11,15 +11,23 @@ export default {
       },
       colors: {
         surface: {
-          900: '#0d0d0d',
-          800: '#151515',
-          700: '#1a1a1a',
-          600: '#242424',
+          900: 'var(--surface-900)',
+          800: 'var(--surface-800)',
+          700: 'var(--surface-700)',
+          600: 'var(--surface-600)',
+          500: 'var(--surface-500)',
         },
         accent: {
-          green: '#22c55e',
-          lime: '#84cc16',
-          cyan: '#06b6d4',
+          primary: 'var(--accent-primary)',
+          secondary: 'var(--accent-secondary)',
+          cyan: 'var(--accent-cyan)',
+        },
+        neutral: {
+          100: 'var(--neutral-100)',
+          200: 'var(--neutral-200)',
+          400: 'var(--neutral-400)',
+          500: 'var(--neutral-500)',
+          600: 'var(--neutral-600)',
         }
       }
     },

@@ -167,7 +167,7 @@ function Statistics() {
           onChange={(e) => setSelectedDate(e.target.value)}
           placeholder="DD.MM.YYYY"
           className="bg-surface-700 border border-surface-600 rounded-lg px-4 py-2 
-                     text-neutral-200 focus:outline-none focus:border-accent-lime
+                     text-neutral-200 focus:outline-none focus:border-accent-secondary
                      cursor-pointer"
         />
       </div>
@@ -177,7 +177,7 @@ function Statistics() {
         <h3 className="text-sm text-neutral-400 uppercase tracking-wider mb-3">
           Summary
         </h3>
-        <div className="text-3xl font-bold text-accent-lime">
+        <div className="text-3xl font-bold text-accent-secondary">
           {formatDuration(totalTime)}
         </div>
         <div className="text-sm text-neutral-500 mt-1">
@@ -228,7 +228,7 @@ function Statistics() {
                       value={editForm.taskName}
                       onChange={(e) => setEditForm({ ...editForm, taskName: e.target.value })}
                       className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
-                                 text-neutral-200 focus:outline-none focus:border-accent-lime"
+                                 text-neutral-200 focus:outline-none focus:border-accent-secondary"
                       autoFocus
                     />
                   </div>
@@ -241,7 +241,7 @@ function Statistics() {
                         onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
                         placeholder="DD.MM.YYYY HH:mm"
                         className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
-                                   text-neutral-200 focus:outline-none focus:border-accent-lime"
+                                   text-neutral-200 focus:outline-none focus:border-accent-secondary"
                       />
                     </div>
                     <div>
@@ -252,14 +252,14 @@ function Statistics() {
                         onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
                         placeholder="DD.MM.YYYY HH:mm"
                         className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
-                                   text-neutral-200 focus:outline-none focus:border-accent-lime"
+                                   text-neutral-200 focus:outline-none focus:border-accent-secondary"
                       />
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleSaveEdit}
-                      className="flex-1 bg-accent-green hover:bg-accent-lime text-surface-900 
+                      className="flex-1 bg-accent-primary hover:bg-accent-secondary text-surface-900 
                                  font-medium py-2 px-4 rounded-lg transition-colors"
                     >
                       Save
@@ -285,7 +285,7 @@ function Statistics() {
                   <div className="flex-1 text-neutral-200">
                     {entry.task_name}
                   </div>
-                  <div className="text-accent-green text-sm">
+                  <div className="text-accent-primary text-sm">
                     {formatDuration(entry.duration_seconds)}
                   </div>
                   <div className="flex gap-2">
