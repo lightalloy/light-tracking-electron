@@ -146,6 +146,16 @@ function setupIPC() {
     return db.getEntriesByDate(date)
   })
 
+  ipcMain.handle('entries:update', async (event, id, taskName, startTime, endTime) => {
+    const success = db.updateTimeSlot(id, taskName, startTime, endTime)
+    return { success }
+  })
+
+  ipcMain.handle('entries:delete', async (event, id) => {
+    const success = db.deleteTimeSlot(id)
+    return { success }
+  })
+
   ipcMain.handle('stats:get', async (event, date) => {
     return db.getStatsByDate(date)
   })
