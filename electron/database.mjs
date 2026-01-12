@@ -79,7 +79,7 @@ class TimeTrackingDB {
       SELECT id, task_name, start_time, end_time, duration_seconds
       FROM time_slots
       WHERE date(start_time) = ?
-      ORDER BY start_time ASC
+      ORDER BY start_time DESC
     `)
     return stmt.all(dateStr)
   }
