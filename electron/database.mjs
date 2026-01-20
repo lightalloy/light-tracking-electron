@@ -97,19 +97,28 @@ class TimeTrackingDB {
   }
 
   updateTimeSlot(id, taskName, startTime, endTime) {
-    // Calculate duration_seconds from startTime and endTime
     const stmt = this.db.prepare(`
       UPDATE time_slots
       SET task_name = ?,
           start_time = ?,
           end_time = ?,
-          duration_seconds = CAST((julianday(?) - julianday(?)) * 86400 AS INTEGER)
+          duration_seconds = CASE
+            WHEN ? IS NOT NULL THEN CAST((julianday(?) - julianday(?)) * 86400 AS INTEGER)
+            ELSE 0
+          END
       WHERE id = ?
     `)
-    const result = stmt.run(taskName, startTime, endTime, endTime, startTime, id)
+    const result = stmt.run(
+      taskName, 
+      startTime, 
+      endTime, 
+      endTime,
+      endTime,
+      startTime,
+      id
+    )
     return result.changes > 0
   }
-
   deleteTimeSlot(id) {
     const stmt = this.db.prepare(`
       DELETE FROM time_slots

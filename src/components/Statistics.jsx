@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { isActiveSlot, useState, useEffect } from 'react'
 
 const formatDateForInput = (dateStr) => {
   if (!dateStr) return ''
@@ -50,6 +50,7 @@ function Statistics() {
   const [entries, setEntries] = useState([])
   const [stats, setStats] = useState([])
   const [editingId, setEditingId] = useState(null)
+  const [isActiveSlot, setIsActiveSlot] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [editForm, setEditForm] = useState({ taskName: '', startTime: '', endTime: '' })
 
@@ -85,6 +86,7 @@ function Statistics() {
 
   const handleEdit = (entry) => {
     setEditingId(entry.id)
+    setIsActiveSlot(entry.end_time === null)
     setEditForm({
       taskName: entry.task_name,
       startTime: formatDateTimeForInput(entry.start_time),
@@ -94,6 +96,7 @@ function Statistics() {
 
   const handleCancelEdit = () => {
     setEditingId(null)
+    setIsActiveSlot(false)
     setEditForm({ taskName: '', startTime: '', endTime: '' })
   }
 
@@ -106,12 +109,17 @@ function Statistics() {
     const startTime = parseDateTimeInput(editForm.startTime)
     const endTime = parseDateTimeInput(editForm.endTime)
 
-    if (!startTime || !endTime) {
+    if (!startTime) {
       alert('Start time and end time are required')
       return
     }
 
-    if (new Date(endTime) <= new Date(startTime)) {
+    if (!isActiveSlot && !endTime) {
+      alert('End time is required')
+      return
+    }
+
+    if (endTime && new Date(endTime) <= new Date(startTime)) {
       alert('End time must be after start time')
       return
     }
@@ -121,11 +129,12 @@ function Statistics() {
         editingId,
         editForm.taskName.trim(),
         startTime,
-        endTime
+        endTime || null
       )
 
       if (result.success) {
         setEditingId(null)
+        setIsActiveSlot(false)
         setEditForm({ taskName: '', startTime: '', endTime: '' })
         loadData()
       } else {
