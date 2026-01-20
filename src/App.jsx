@@ -31,7 +31,7 @@ function App() {
     if (window.electronAPI) {
       await window.electronAPI.startTimer(taskName)
       setIsRunning(true)
-      setCurrentTask({ task_name: taskName, start_time: new Date().toISOString() })
+      setCurrentTask({ note: taskName, start: new Date().toISOString() })
     }
   }
 

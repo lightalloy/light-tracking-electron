@@ -1,4 +1,4 @@
-import { isActiveSlot, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 const formatDateForInput = (dateStr) => {
   if (!dateStr) return ''
@@ -78,6 +78,14 @@ function Statistics() {
     return `${m}m`
   }
 
+  const calculateDuration = (start, end) => {
+    if (!start) return 0
+    if (!end) return 0 // Active timer - duration is still being tracked
+    const startTime = new Date(start).getTime()
+    const endTime = new Date(end).getTime()
+    return Math.floor((endTime - startTime) / 1000)
+  }
+
   const formatTime = (dateStr) => {
     if (!dateStr) return '--:--'
     const date = new Date(dateStr)
@@ -86,11 +94,11 @@ function Statistics() {
 
   const handleEdit = (entry) => {
     setEditingId(entry.id)
-    setIsActiveSlot(entry.end_time === null)
+    setIsActiveSlot(entry.end === null)
     setEditForm({
-      taskName: entry.task_name,
-      startTime: formatDateTimeForInput(entry.start_time),
-      endTime: formatDateTimeForInput(entry.end_time)
+      taskName: entry.note,
+      startTime: formatDateTimeForInput(entry.start),
+      endTime: formatDateTimeForInput(entry.end)
     })
   }
 
@@ -206,7 +214,7 @@ function Statistics() {
                 key={i}
                 className="flex items-center justify-between bg-surface-700 rounded-lg px-4 py-3"
               >
-                <span className="text-neutral-200">{stat.task_name}</span>
+                <span className="text-neutral-200">{stat.task_name || stat.note}</span>
                 <span className="text-accent-cyan font-medium">
                   {formatDuration(stat.total_seconds)}
                 </span>
@@ -289,13 +297,13 @@ function Statistics() {
                   className="flex items-center gap-4 bg-surface-700 rounded-lg px-4 py-3"
                 >
                   <div className="text-neutral-500 text-sm font-medium w-24">
-                    {formatTime(entry.start_time)} - {formatTime(entry.end_time)}
+                    {formatTime(entry.start)} - {formatTime(entry.end)}
                   </div>
                   <div className="flex-1 text-neutral-200">
-                    {entry.task_name}
+                    {entry.note}
                   </div>
                   <div className="text-accent-primary text-sm">
-                    {formatDuration(entry.duration_seconds)}
+                    {formatDuration(calculateDuration(entry.start, entry.end))}
                   </div>
                   <div className="flex gap-2">
                     <button

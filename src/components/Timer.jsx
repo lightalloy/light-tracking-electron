@@ -6,8 +6,8 @@ function Timer({ isRunning, currentTask }) {
   useEffect(() => {
     let interval = null
     
-    if (isRunning && currentTask?.start_time) {
-      const startTime = new Date(currentTask.start_time).getTime()
+    if (isRunning && currentTask?.start) {
+      const startTime = new Date(currentTask.start).getTime()
       
       const updateElapsed = () => {
         setElapsed(Math.floor((Date.now() - startTime) / 1000))
@@ -53,7 +53,7 @@ function Timer({ isRunning, currentTask }) {
       {/* Current task */}
       {currentTask && (
         <div className="text-accent-cyan text-lg">
-          {currentTask.task_name}
+          {currentTask.note}
         </div>
       )}
     </div>
