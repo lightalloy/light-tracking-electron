@@ -10,51 +10,55 @@ class TimeTrackingDB {
   }
 
   init() {
-    const dbDir = path.join(os.homedir(), '.light-tracking')
-    const dbPath = path.join(dbDir, 'time_tracking.db')
-
+    // Get database path from environment variable or use default
+    const dbPath = process.env.TIMETRAP_DB_PATH || path.join(os.homedir(), '.timetrap.db')
+    
+    // Resolve path (handle both absolute and relative paths)
+    const resolvedPath = path.isAbsolute(dbPath) ? dbPath : path.resolve(dbPath)
+    
     // Create directory if it doesn't exist
+    const dbDir = path.dirname(resolvedPath)
     if (!fs.existsSync(dbDir)) {
       fs.mkdirSync(dbDir, { recursive: true })
     }
 
-    this.db = new Database(dbPath)
+    this.db = new Database(resolvedPath)
     this.db.pragma('journal_mode = WAL')
 
-    // Create table if it doesn't exist
+    // Create table if it doesn't exist (timetrap schema)
     this.db.exec(`
-      CREATE TABLE IF NOT EXISTS time_slots (
+      CREATE TABLE IF NOT EXISTS entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        task_name TEXT NOT NULL,
-        start_time DATETIME NOT NULL,
-        end_time DATETIME,
-        duration_seconds INTEGER DEFAULT 0
+        note VARCHAR(255),
+        start TIMESTAMP,
+        end TIMESTAMP,
+        sheet VARCHAR(255)
       );
-      CREATE INDEX IF NOT EXISTS idx_start_time ON time_slots(start_time);
-      CREATE INDEX IF NOT EXISTS idx_task_name ON time_slots(task_name);
+      CREATE INDEX IF NOT EXISTS idx_start ON entries(start);
+      CREATE INDEX IF NOT EXISTS idx_note ON entries(note);
+      CREATE INDEX IF NOT EXISTS idx_sheet ON entries(sheet);
     `)
   }
 
   startTimer(taskName) {
     const stmt = this.db.prepare(`
-      INSERT INTO time_slots (task_name, start_time)
-      VALUES (?, datetime('now', 'localtime'))
+      INSERT INTO entries (note, start, sheet)
+      VALUES (?, datetime('now', 'localtime'), 'default')
     `)
     const result = stmt.run(taskName)
     return result.lastInsertRowid
   }
 
   stopTimer() {
-    // Find the active timer (end_time is NULL)
+    // Find the active timer (end is NULL)
     const activeTimer = this.db.prepare(`
-      SELECT id, start_time FROM time_slots WHERE end_time IS NULL ORDER BY id DESC LIMIT 1
+      SELECT id, start FROM entries WHERE end IS NULL AND sheet = 'default' ORDER BY id DESC LIMIT 1
     `).get()
 
     if (activeTimer) {
       const stmt = this.db.prepare(`
-        UPDATE time_slots
-        SET end_time = datetime('now', 'localtime'),
-            duration_seconds = CAST((julianday(datetime('now', 'localtime')) - julianday(start_time)) * 86400 AS INTEGER)
+        UPDATE entries
+        SET end = datetime('now', 'localtime')
         WHERE id = ?
       `)
       stmt.run(activeTimer.id)
@@ -65,9 +69,9 @@ class TimeTrackingDB {
 
   getActiveTimer() {
     return this.db.prepare(`
-      SELECT id, task_name, start_time
-      FROM time_slots
-      WHERE end_time IS NULL
+      SELECT id, note, start
+      FROM entries
+      WHERE end IS NULL AND sheet = 'default'
       ORDER BY id DESC
       LIMIT 1
     `).get()
@@ -76,21 +80,25 @@ class TimeTrackingDB {
   getEntriesByDate(dateStr) {
     // dateStr format: 'YYYY-MM-DD'
     const stmt = this.db.prepare(`
-      SELECT id, task_name, start_time, end_time, duration_seconds
-      FROM time_slots
-      WHERE date(start_time) = ?
-      ORDER BY start_time DESC
+      SELECT id, note, start, end, sheet
+      FROM entries
+      WHERE date(start) = ? AND sheet = 'default'
+      ORDER BY start DESC
     `)
     return stmt.all(dateStr)
   }
 
   getStatsByDate(dateStr) {
     // Aggregate time by task for a given date
+    // Calculate duration dynamically from start and end timestamps
     const stmt = this.db.prepare(`
-      SELECT task_name, SUM(duration_seconds) as total_seconds, COUNT(*) as entry_count
-      FROM time_slots
-      WHERE date(start_time) = ? AND end_time IS NOT NULL
-      GROUP BY task_name
+      SELECT 
+        note as task_name,
+        SUM(CAST((julianday(end) - julianday(start)) * 86400 AS INTEGER)) as total_seconds,
+        COUNT(*) as entry_count
+      FROM entries
+      WHERE date(start) = ? AND end IS NOT NULL AND sheet = 'default'
+      GROUP BY note
       ORDER BY total_seconds DESC
     `)
     return stmt.all(dateStr)
@@ -98,31 +106,24 @@ class TimeTrackingDB {
 
   updateTimeSlot(id, taskName, startTime, endTime) {
     const stmt = this.db.prepare(`
-      UPDATE time_slots
-      SET task_name = ?,
-          start_time = ?,
-          end_time = ?,
-          duration_seconds = CASE
-            WHEN ? IS NOT NULL THEN CAST((julianday(?) - julianday(?)) * 86400 AS INTEGER)
-            ELSE 0
-          END
-      WHERE id = ?
+      UPDATE entries
+      SET note = ?,
+          start = ?,
+          end = ?
+      WHERE id = ? AND sheet = 'default'
     `)
     const result = stmt.run(
       taskName, 
       startTime, 
-      endTime, 
-      endTime,
-      endTime,
-      startTime,
+      endTime || null,
       id
     )
     return result.changes > 0
   }
   deleteTimeSlot(id) {
     const stmt = this.db.prepare(`
-      DELETE FROM time_slots
-      WHERE id = ?
+      DELETE FROM entries
+      WHERE id = ? AND sheet = 'default'
     `)
     const result = stmt.run(id)
     return result.changes > 0

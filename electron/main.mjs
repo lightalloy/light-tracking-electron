@@ -32,7 +32,7 @@ function updateTray() {
   
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: activeTimer ? `Tracking: ${activeTimer.task_name}` : 'No active timer',
+      label: activeTimer ? `Tracking: ${activeTimer.note}` : 'No active timer',
       enabled: false,
     },
     { type: 'separator' },
@@ -67,7 +67,7 @@ function updateTray() {
   ])
   
   tray.setContextMenu(contextMenu)
-  tray.setToolTip(isActive ? `Tracking: ${activeTimer.task_name}` : 'Light Tracking')
+  tray.setToolTip(isActive ? `Tracking: ${activeTimer.note}` : 'Light Tracking')
 }
 
 function createWindow() {
