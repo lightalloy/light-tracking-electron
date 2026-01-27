@@ -1,4 +1,4 @@
-import { isActiveSlot, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 const formatDateForInput = (dateStr) => {
   if (!dateStr) return ''
@@ -42,7 +42,7 @@ const parseDateTimeInput = (dateTimeStr) => {
   return ''
 }
 
-function Statistics() {
+function Statistics({ currentTask, onSwitchTask }) {
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date()
     return formatDateForInput(today.toISOString().split('T')[0])
@@ -201,17 +201,34 @@ function Statistics() {
             By Task
           </h3>
           <div className="space-y-2">
-            {stats.map((stat, i) => (
-              <div 
-                key={i}
-                className="flex items-center justify-between bg-surface-700 rounded-lg px-4 py-3"
-              >
-                <span className="text-neutral-200">{stat.task_name}</span>
-                <span className="text-accent-cyan font-medium">
-                  {formatDuration(stat.total_seconds)}
-                </span>
-              </div>
-            ))}
+            {stats.map((stat, i) => {
+              const isCurrentTask = currentTask?.task_name === stat.task_name
+              return (
+                <div 
+                  key={i}
+                  className="flex items-center gap-3 bg-surface-700 rounded-lg px-4 py-3"
+                >
+                  <button
+                    onClick={() => onSwitchTask(stat.task_name)}
+                    disabled={isCurrentTask}
+                    className={`flex-shrink-0 transition-colors ${
+                      isCurrentTask 
+                        ? 'text-neutral-600 cursor-not-allowed' 
+                        : 'text-neutral-400 hover:text-accent-primary'
+                    }`}
+                    title={isCurrentTask ? 'Currently tracking' : 'Start this task'}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </button>
+                  <span className="flex-1 text-neutral-200">{stat.task_name}</span>
+                  <span className="text-accent-cyan font-medium">
+                    {formatDuration(stat.total_seconds)}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

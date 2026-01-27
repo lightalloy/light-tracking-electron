@@ -43,6 +43,17 @@ function App() {
     }
   }
 
+  const handleSwitchTask = async (taskName) => {
+    if (window.electronAPI) {
+      if (isRunning) {
+        await window.electronAPI.stopTimer()
+      }
+      await window.electronAPI.startTimer(taskName)
+      setIsRunning(true)
+      setCurrentTask({ task_name: taskName, start_time: new Date().toISOString() })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-surface-900 p-6">
       <div className="max-w-2xl mx-auto">
@@ -95,7 +106,10 @@ function App() {
               />
             </div>
           ) : (
-            <Statistics />
+            <Statistics 
+              currentTask={currentTask}
+              onSwitchTask={handleSwitchTask}
+            />
           )}
         </main>
       </div>
