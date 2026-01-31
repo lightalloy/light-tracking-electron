@@ -15,21 +15,21 @@ const isDev = !app.isPackaged
 
 function createTrayIcon(isActive) {
   const iconName = isActive ? 'icon-active.png' : 'icon-inactive.png'
-  const iconPath = isDev 
+  const iconPath = isDev
     ? path.join(__dirname, '..', 'assets', iconName)
-    : path.join(process.resourcesPath, 'assets', iconName)
-  
+    : path.join(app.getAppPath(), 'assets', iconName)
+
   return nativeImage.createFromPath(iconPath)
 }
 
 function updateTray() {
   if (!tray) return
-  
+
   const activeTimer = db.getActiveTimer()
   const isActive = !!activeTimer
-  
+
   tray.setImage(createTrayIcon(isActive))
-  
+
   const contextMenu = Menu.buildFromTemplate([
     {
       label: activeTimer ? `Tracking: ${activeTimer.task_name}` : 'No active timer',
@@ -65,7 +65,7 @@ function updateTray() {
       }
     }
   ])
-  
+
   tray.setContextMenu(contextMenu)
   tray.setToolTip(isActive ? `Tracking: ${activeTimer.task_name}` : 'Light Tracking')
 }
@@ -111,7 +111,7 @@ function createWindow() {
 function createTray() {
   tray = new Tray(createTrayIcon(false))
   tray.setToolTip('Light Tracking')
-  
+
   tray.on('click', () => {
     if (mainWindow) {
       if (mainWindow.isVisible()) {
@@ -121,7 +121,7 @@ function createTray() {
       }
     }
   })
-  
+
   updateTray()
 }
 
