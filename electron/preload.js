@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Data retrieval
   getEntries: (date) => ipcRenderer.invoke('entries:get', date),
   getStats: (date) => ipcRenderer.invoke('stats:get', date),
+  getEntriesRange: (startDate, endDate) => ipcRenderer.invoke('entries:getRange', startDate, endDate),
+  getStatsRange: (startDate, endDate) => ipcRenderer.invoke('stats:getRange', startDate, endDate),
   
   // Entry management
   updateEntry: (id, taskName, startTime, endTime) => ipcRenderer.invoke('entries:update', id, taskName, startTime, endTime),

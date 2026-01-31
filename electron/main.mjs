@@ -163,6 +163,14 @@ function setupIPC() {
   ipcMain.handle('stats:get', async (event, date) => {
     return db.getStatsByDate(date)
   })
+
+  ipcMain.handle('entries:getRange', async (event, startDate, endDate) => {
+    return db.getEntriesByDateRange(startDate, endDate)
+  })
+
+  ipcMain.handle('stats:getRange', async (event, startDate, endDate) => {
+    return db.getStatsByDateRange(startDate, endDate)
+  })
 }
 
 app.whenReady().then(() => {

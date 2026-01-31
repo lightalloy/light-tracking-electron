@@ -96,6 +96,29 @@ class TimeTrackingDB {
     return stmt.all(dateStr)
   }
 
+  getEntriesByDateRange(startDate, endDate) {
+    // startDate, endDate format: 'YYYY-MM-DD' (inclusive)
+    const stmt = this.db.prepare(`
+      SELECT id, task_name, start_time, end_time, duration_seconds
+      FROM time_slots
+      WHERE date(start_time) >= ? AND date(start_time) <= ?
+      ORDER BY start_time ASC
+    `)
+    return stmt.all(startDate, endDate)
+  }
+
+  getStatsByDateRange(startDate, endDate) {
+    // Aggregate time by task for date range (inclusive)
+    const stmt = this.db.prepare(`
+      SELECT task_name, SUM(duration_seconds) as total_seconds, COUNT(*) as entry_count
+      FROM time_slots
+      WHERE date(start_time) >= ? AND date(start_time) <= ? AND end_time IS NOT NULL
+      GROUP BY task_name
+      ORDER BY total_seconds DESC
+    `)
+    return stmt.all(startDate, endDate)
+  }
+
   updateTimeSlot(id, taskName, startTime, endTime) {
     const stmt = this.db.prepare(`
       UPDATE time_slots

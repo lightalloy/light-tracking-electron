@@ -42,11 +42,49 @@ const parseDateTimeInput = (dateTimeStr) => {
   return ''
 }
 
+// Week = Monday–Sunday. Returns DD.MM.YYYY.
+const getTodayFormatted = () => {
+  const d = new Date()
+  return formatDateForInput(d.toISOString().split('T')[0])
+}
+
+const getYesterdayFormatted = () => {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return formatDateForInput(d.toISOString().split('T')[0])
+}
+
+const getThisWeekRange = () => {
+  const d = new Date()
+  const day = d.getDay()
+  const diff = day === 0 ? 6 : day - 1
+  const monday = new Date(d)
+  monday.setDate(d.getDate() - diff)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  return {
+    from: formatDateForInput(monday.toISOString().split('T')[0]),
+    to: formatDateForInput(sunday.toISOString().split('T')[0])
+  }
+}
+
+const getLastWeekRange = () => {
+  const d = new Date()
+  const day = d.getDay()
+  const diff = day === 0 ? 6 : day - 1
+  const monday = new Date(d)
+  monday.setDate(d.getDate() - diff - 7)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  return {
+    from: formatDateForInput(monday.toISOString().split('T')[0]),
+    to: formatDateForInput(sunday.toISOString().split('T')[0])
+  }
+}
+
 function Statistics({ currentTask, onSwitchTask }) {
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date()
-    return formatDateForInput(today.toISOString().split('T')[0])
-  })
+  const [dateFrom, setDateFrom] = useState(() => getTodayFormatted())
+  const [dateTo, setDateTo] = useState(() => getTodayFormatted())
   const [entries, setEntries] = useState([])
   const [stats, setStats] = useState([])
   const [editingId, setEditingId] = useState(null)
@@ -54,16 +92,30 @@ function Statistics({ currentTask, onSwitchTask }) {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [editForm, setEditForm] = useState({ taskName: '', startTime: '', endTime: '' })
 
+  const isSingleDay = dateFrom === dateTo
+
   useEffect(() => {
     loadData()
-  }, [selectedDate])
+  }, [dateFrom, dateTo])
 
   const loadData = async () => {
-    if (window.electronAPI) {
-      const dateForAPI = parseDateInput(selectedDate)
+    if (!window.electronAPI) return
+    const fromAPI = parseDateInput(dateFrom)
+    const toAPI = parseDateInput(dateTo)
+    if (!fromAPI || !toAPI) return
+    if (toAPI < fromAPI) return
+
+    if (isSingleDay) {
       const [entriesData, statsData] = await Promise.all([
-        window.electronAPI.getEntries(dateForAPI),
-        window.electronAPI.getStats(dateForAPI)
+        window.electronAPI.getEntries(fromAPI),
+        window.electronAPI.getStats(fromAPI)
+      ])
+      setEntries(entriesData || [])
+      setStats(statsData || [])
+    } else {
+      const [entriesData, statsData] = await Promise.all([
+        window.electronAPI.getEntriesRange(fromAPI, toAPI),
+        window.electronAPI.getStatsRange(fromAPI, toAPI)
       ])
       setEntries(entriesData || [])
       setStats(statsData || [])
@@ -166,19 +218,87 @@ function Statistics({ currentTask, onSwitchTask }) {
 
   const totalTime = stats.reduce((sum, s) => sum + (s.total_seconds || 0), 0)
 
+  const setToday = () => {
+    const t = getTodayFormatted()
+    setDateFrom(t)
+    setDateTo(t)
+  }
+
+  const setYesterday = () => {
+    const t = getYesterdayFormatted()
+    setDateFrom(t)
+    setDateTo(t)
+  }
+
+  const setThisWeek = () => {
+    const { from, to } = getThisWeekRange()
+    setDateFrom(from)
+    setDateTo(to)
+  }
+
+  const setLastWeek = () => {
+    const { from, to } = getLastWeekRange()
+    setDateFrom(from)
+    setDateTo(to)
+  }
+
   return (
     <div className="space-y-6">
-      {/* Date picker */}
-      <div>
-        <input
-          type="text"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          placeholder="DD.MM.YYYY"
-          className="bg-surface-700 border border-surface-600 rounded-lg px-4 py-2 
-                     text-neutral-200 focus:outline-none focus:border-accent-secondary
-                     cursor-pointer"
-        />
+      {/* Date range picker */}
+      <div className="space-y-2">
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              placeholder="DD.MM.YYYY"
+              className="bg-surface-700 border border-surface-600 rounded-lg px-3 py-2 w-32
+                         text-neutral-200 focus:outline-none focus:border-accent-secondary"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-neutral-400">to</label>
+            <input
+              type="text"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              placeholder="DD.MM.YYYY"
+              className="bg-surface-700 border border-surface-600 rounded-lg px-3 py-2 w-32
+                         text-neutral-200 focus:outline-none focus:border-accent-secondary"
+            />
+          </div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={setToday}
+            className="bg-surface-600 hover:bg-surface-500 text-neutral-200 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            onClick={setYesterday}
+            className="bg-surface-600 hover:bg-surface-500 text-neutral-200 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Yesterday
+          </button>
+          <button
+            type="button"
+            onClick={setThisWeek}
+            className="bg-surface-600 hover:bg-surface-500 text-neutral-200 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            This week
+          </button>
+          <button
+            type="button"
+            onClick={setLastWeek}
+            className="bg-surface-600 hover:bg-surface-500 text-neutral-200 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Last week
+          </button>
+        </div>
       </div>
 
       {/* Summary stats */}
@@ -239,111 +359,150 @@ function Statistics({ currentTask, onSwitchTask }) {
           <h3 className="text-sm text-neutral-400 uppercase tracking-wider mb-3">
             Timeline
           </h3>
-          <div className="space-y-2">
-            {entries.map((entry) => (
-              editingId === entry.id ? (
-                // Edit form
-                <div 
-                  key={entry.id}
-                  className="bg-surface-700 rounded-lg px-4 py-3 space-y-3"
-                >
-                  <div>
-                    <label className="block text-xs text-neutral-400 mb-1">Task Name</label>
-                    <input
-                      type="text"
-                      value={editForm.taskName}
-                      onChange={(e) => setEditForm({ ...editForm, taskName: e.target.value })}
-                      className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
-                                 text-neutral-200 focus:outline-none focus:border-accent-secondary"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
+          {isSingleDay ? (
+            <div className="space-y-2">
+              {entries.map((entry) => (
+                editingId === entry.id ? (
+                  <div 
+                    key={entry.id}
+                    className="bg-surface-700 rounded-lg px-4 py-3 space-y-3"
+                  >
                     <div>
-                      <label className="block text-xs text-neutral-400 mb-1">Start Time</label>
+                      <label className="block text-xs text-neutral-400 mb-1">Task Name</label>
                       <input
                         type="text"
-                        value={editForm.startTime}
-                        onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
-                        placeholder="DD.MM.YYYY HH:mm"
+                        value={editForm.taskName}
+                        onChange={(e) => setEditForm({ ...editForm, taskName: e.target.value })}
                         className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
                                    text-neutral-200 focus:outline-none focus:border-accent-secondary"
+                        autoFocus
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs text-neutral-400 mb-1">End Time</label>
-                      <input
-                        type="text"
-                        value={editForm.endTime}
-                        onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
-                        placeholder="DD.MM.YYYY HH:mm"
-                        className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
-                                   text-neutral-200 focus:outline-none focus:border-accent-secondary"
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-neutral-400 mb-1">Start Time</label>
+                        <input
+                          type="text"
+                          value={editForm.startTime}
+                          onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
+                          placeholder="DD.MM.YYYY HH:mm"
+                          className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
+                                     text-neutral-200 focus:outline-none focus:border-accent-secondary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-neutral-400 mb-1">End Time</label>
+                        <input
+                          type="text"
+                          value={editForm.endTime}
+                          onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
+                          placeholder="DD.MM.YYYY HH:mm"
+                          className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 
+                                     text-neutral-200 focus:outline-none focus:border-accent-secondary"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSaveEdit}
+                        className="flex-1 bg-accent-primary hover:bg-accent-secondary text-surface-900 
+                                   font-medium py-2 px-4 rounded-lg transition-colors"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="flex-1 bg-surface-600 hover:bg-surface-500 text-neutral-200 
+                                   font-medium py-2 px-4 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSaveEdit}
-                      className="flex-1 bg-accent-primary hover:bg-accent-secondary text-surface-900 
-                                 font-medium py-2 px-4 rounded-lg transition-colors"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancelEdit}
-                      className="flex-1 bg-surface-600 hover:bg-surface-500 text-neutral-200 
-                                 font-medium py-2 px-4 rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
+                ) : (
+                  <div 
+                    key={entry.id}
+                    className="flex items-center gap-4 bg-surface-700 rounded-lg px-4 py-3"
+                  >
+                    <div className="text-neutral-500 text-sm font-medium w-24">
+                      {formatTime(entry.start_time)} - {formatTime(entry.end_time)}
+                    </div>
+                    <div className="flex-1 text-neutral-200">
+                      {entry.task_name}
+                    </div>
+                    <div className="text-accent-primary text-sm">
+                      {formatDuration(entry.duration_seconds)}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(entry)}
+                        className="text-neutral-400 hover:text-accent-cyan transition-colors px-2 py-1"
+                        title="Edit"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(entry.id)}
+                        className="text-neutral-400 hover:text-red-400 transition-colors px-2 py-1"
+                        title="Delete"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                // Entry display
-                <div 
-                  key={entry.id}
-                  className="flex items-center gap-4 bg-surface-700 rounded-lg px-4 py-3"
-                >
-                  <div className="text-neutral-500 text-sm font-medium w-24">
-                    {formatTime(entry.start_time)} - {formatTime(entry.end_time)}
-                  </div>
-                  <div className="flex-1 text-neutral-200">
-                    {entry.task_name}
-                  </div>
-                  <div className="text-accent-primary text-sm">
-                    {formatDuration(entry.duration_seconds)}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(entry)}
-                      className="text-neutral-400 hover:text-accent-cyan transition-colors px-2 py-1"
-                      title="Edit"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(entry.id)}
-                      className="text-neutral-400 hover:text-red-400 transition-colors px-2 py-1"
-                      title="Delete"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+                )
+              ))}
+            </div>
+          ) : (
+            (() => {
+              const byDay = {}
+              for (const entry of entries) {
+                const dayKey = entry.start_time ? entry.start_time.split(' ')[0] : ''
+                if (!byDay[dayKey]) byDay[dayKey] = []
+                byDay[dayKey].push(entry)
+              }
+              const days = Object.keys(byDay).sort()
+              return (
+                <div className="space-y-4">
+                  {days.map((dayKey) => (
+                    <div key={dayKey}>
+                      <h4 className="text-xs text-neutral-500 uppercase tracking-wider mb-2">
+                        {formatDateForInput(dayKey)}
+                      </h4>
+                      <div className="space-y-2">
+                        {byDay[dayKey].map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="flex items-center gap-4 bg-surface-700 rounded-lg px-4 py-3"
+                          >
+                            <div className="text-neutral-500 text-sm font-medium w-24">
+                              {formatTime(entry.start_time)} - {formatTime(entry.end_time)}
+                            </div>
+                            <div className="flex-1 text-neutral-200">
+                              {entry.task_name}
+                            </div>
+                            <div className="text-accent-primary text-sm">
+                              {formatDuration(entry.duration_seconds)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )
-            ))}
-          </div>
+            })()
+          )}
         </div>
       )}
 
       {entries.length === 0 && (
         <div className="text-center py-8 text-neutral-500">
-          No entries for this date
+          {isSingleDay ? 'No entries for this date' : 'No entries for this period'}
         </div>
       )}
 
