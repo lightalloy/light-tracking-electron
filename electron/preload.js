@@ -16,6 +16,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateEntry: (id, taskName, startTime, endTime) => ipcRenderer.invoke('entries:update', id, taskName, startTime, endTime),
   deleteEntry: (id) => ipcRenderer.invoke('entries:delete', id),
   
+  // Task suggestions
+  getRecentTasks: () => ipcRenderer.invoke('tasks:getRecent'),
+  
   // Events from main process
   onTimerStopped: (callback) => {
     ipcRenderer.on('timer:stopped', () => callback())
