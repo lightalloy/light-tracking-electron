@@ -119,6 +119,21 @@ class TimeTrackingDB {
     return stmt.all(startDate, endDate)
   }
 
+  getRecentTaskNames(days) {
+    // Get unique task names used in the last N days, sorted by last usage and frequency
+    const stmt = this.db.prepare(`
+      SELECT DISTINCT task_name, 
+             MAX(start_time) as last_used,
+             COUNT(*) as usage_count
+      FROM time_slots
+      WHERE date(start_time) >= date('now', '-' || ? || ' days')
+      GROUP BY task_name
+      ORDER BY last_used DESC, usage_count DESC
+    `)
+    const results = stmt.all(days)
+    return results.map(row => row.task_name)
+  }
+
   updateTimeSlot(id, taskName, startTime, endTime) {
     const stmt = this.db.prepare(`
       UPDATE time_slots

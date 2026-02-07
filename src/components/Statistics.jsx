@@ -82,6 +82,49 @@ const getLastWeekRange = () => {
   }
 }
 
+const formatDurationCompact = (seconds) => {
+  if (!seconds) return '0m'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`
+  return `${m}m`
+}
+
+const DEV_TASK_REGEX = /^(DEV-\d{3,6})\s*(.*)$/
+
+const formatTaskSummaryLine = (taskName, totalSeconds) => {
+  const match = taskName.match(DEV_TASK_REGEX)
+  if (!match) return `${taskName}: ${formatDurationCompact(totalSeconds)}`
+  const ticket = match[1]
+  const description = match[2].trim()
+  const duration = formatDurationCompact(totalSeconds)
+  return description ? `${ticket}: ${duration} - ${description}` : `${ticket}: ${duration}`
+}
+
+const buildTrackSummary = (entries) => {
+  const byDay = {}
+  for (const entry of entries) {
+    const dayKey = entry.start_time ? entry.start_time.split(' ')[0] : ''
+    if (!dayKey) continue
+    if (!byDay[dayKey]) byDay[dayKey] = {}
+    const taskName = entry.task_name || ''
+    const sec = entry.duration_seconds || 0
+    byDay[dayKey][taskName] = (byDay[dayKey][taskName] || 0) + sec
+  }
+  const days = Object.keys(byDay).sort()
+  const lines = []
+  for (const dayKey of days) {
+    if (lines.length) lines.push('')
+    const tasks = Object.entries(byDay[dayKey]).sort((a, b) => a[0].localeCompare(b[0]))
+    const dayTotalSeconds = tasks.reduce((sum, [, sec]) => sum + sec, 0)
+    lines.push(`# ${formatDateForInput(dayKey)} (${formatDurationCompact(dayTotalSeconds)})`)
+    for (const [taskName, totalSeconds] of tasks) {
+      lines.push(formatTaskSummaryLine(taskName, totalSeconds))
+    }
+  }
+  return lines.join('\n')
+}
+
 function Statistics({ currentTask, onSwitchTask }) {
   const [dateFrom, setDateFrom] = useState(() => getTodayFormatted())
   const [dateTo, setDateTo] = useState(() => getTodayFormatted())
@@ -91,6 +134,8 @@ function Statistics({ currentTask, onSwitchTask }) {
   const [isActiveSlot, setIsActiveSlot] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [editForm, setEditForm] = useState({ taskName: '', startTime: '', endTime: '' })
+  const [showTrackSummary, setShowTrackSummary] = useState(false)
+  const [trackSummaryText, setTrackSummaryText] = useState('')
 
   const isSingleDay = dateFrom === dateTo
 
@@ -242,6 +287,13 @@ function Statistics({ currentTask, onSwitchTask }) {
     setDateTo(to)
   }
 
+  const handleTrackSummaryToggle = () => {
+    if (!showTrackSummary) {
+      setTrackSummaryText(buildTrackSummary(entries))
+    }
+    setShowTrackSummary((v) => !v)
+  }
+
   return (
     <div className="space-y-6">
       {/* Date range picker */}
@@ -268,6 +320,13 @@ function Statistics({ currentTask, onSwitchTask }) {
                          text-neutral-200 focus:outline-none focus:border-accent-secondary"
             />
           </div>
+          <button
+            type="button"
+            onClick={handleTrackSummaryToggle}
+            className="bg-surface-600 hover:bg-surface-500 text-neutral-200 text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+          >
+            {showTrackSummary ? 'Скрыть' : 'Затрекать'}
+          </button>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button
@@ -300,6 +359,24 @@ function Statistics({ currentTask, onSwitchTask }) {
           </button>
         </div>
       </div>
+
+      {/* Track summary (затрекать) */}
+      {showTrackSummary && (
+        <div className="bg-surface-700 rounded-lg p-4">
+          <h3 className="text-sm text-neutral-400 uppercase tracking-wider mb-2">
+            Сводка для затрекивания
+          </h3>
+          <textarea
+            value={trackSummaryText}
+            onChange={(e) => setTrackSummaryText(e.target.value)}
+            rows={12}
+            className="w-full bg-surface-600 border border-surface-500 rounded-lg px-3 py-2
+                       text-neutral-200 font-mono text-sm focus:outline-none focus:border-accent-secondary
+                       resize-y min-h-[8rem]"
+            placeholder="Сводка по дням появится здесь после нажатия «Затрекать»"
+          />
+        </div>
+      )}
 
       {/* Summary stats */}
       <div className="bg-surface-700 rounded-lg p-4">

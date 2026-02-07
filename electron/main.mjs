@@ -171,6 +171,10 @@ function setupIPC() {
   ipcMain.handle('stats:getRange', async (event, startDate, endDate) => {
     return db.getStatsByDateRange(startDate, endDate)
   })
+
+  ipcMain.handle('tasks:getRecent', async () => {
+    return db.getRecentTaskNames(14)
+  })
 }
 
 app.whenReady().then(() => {
