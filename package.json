@@ -13,7 +13,7 @@
     "start": "npm run electron:dev",
     "generate-icons": "node scripts/generate-icons.js",
     "postinstall": "npm run generate-icons && npx @electron/rebuild",
-    "dist": "vite build && electron-builder"
+    "dist": "vite build && electron-builder --publish never"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
@@ -25,8 +25,8 @@
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
     "concurrently": "^8.2.2",
-    "electron": "^29.1.0",
-    "electron-builder": "^24.13.3",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.0.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "vite": "^5.1.6",
